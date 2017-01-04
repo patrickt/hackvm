@@ -6,8 +6,9 @@ import           Data.ByteString.Char8 (ByteString)
 import           Data.Word
 
 data Instruction
-  = StoreLit Literal
+  = StoreLit Word16
   | StoreSym ByteString
+  | Label ByteString
   | Comp CComp CDest CJump
 
 data Reg = D | A | M deriving Show
