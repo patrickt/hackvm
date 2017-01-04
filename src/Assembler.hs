@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Assembler where
 
 import           Control.Monad.RWS.Strict
@@ -47,12 +49,12 @@ setSymbol s w = do
   -- and returns the value.
   oldSyms <- gets symbols
   -- similarly, given a function, `modify`
-  modify' (\s -> s { symbols = M.insert s w oldSyms })
+  modify (\a -> a { symbols = M.insert s w oldSyms })
 
 buildSymbolTable :: AssemblyM ()
 buildSymbolTable = do
   forM_ [0..15] $ \r -> do
-    let reg = "R" <> bshow r
+    let reg = "R" <> (bshow r)
     setSymbol reg r
 
   setSymbol "SP" 0
@@ -73,7 +75,7 @@ assemble = do
   case instr of
     -- computation: dispatch to recordComp
     -- the c@CComp syntax allows us to save the matched variable under a name.
-    Comp comp dst jump -> tell ["111" <> acc] where acc = B.concat [toChunk comp, toChunk dst, toComp jump]
+    Comp comp dst jump -> tell ["111" <> acc] where acc = B.concat [toChunk comp, toChunk dst, toChunk jump]
     -- literal store: just return the base-2 immediate value
     StoreLit addr -> recordWordPadded addr
     -- symbolic store: look up the symbol, and dispatch appropriately
@@ -96,3 +98,6 @@ assemble = do
   if done
      then return () -- bail out, we're done
      else local tail buildSymbolTable -- recurse, but drop the first instruction
+
+bshow :: Show a => a -> ByteString
+bshow = B.pack . show

@@ -1,4 +1,5 @@
-{-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE BinaryLiterals    #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Instruction where
 
@@ -15,9 +16,10 @@ data Reg = D | A | M deriving Show
 
 -- this is what we call a "lawless typeclass", which is
 -- technically bad practice, but to hell with it
-class ToChunk a where toChunk :: a -> ByteString
+class ToChunk a where
+  toChunk :: a -> ByteString
 
-type CComp
+data CComp
   = Zero
   | One
   | NegOne
@@ -32,7 +34,7 @@ type CComp
   | OrReg Reg Reg
     deriving Show
 
-instance ToChunk a where
+instance ToChunk CComp where
   toChunk Zero         = "0101010"
   toChunk One          = "0111111"
   toChunk NegOne       = "0111010"
@@ -71,6 +73,7 @@ data CDest
   | MemAndA
   | DAndA
   | MemDAndA
+    deriving Eq
 
 instance ToChunk CDest where
   toChunk NoDest   = "000"
@@ -91,6 +94,7 @@ data CJump
   | JNE
   | JLE
   | JMP
+    deriving Eq
 
 instance ToChunk CJump where
   toChunk JNull = "000"
