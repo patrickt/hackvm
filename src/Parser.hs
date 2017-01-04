@@ -81,6 +81,9 @@ item = choice [ chomp Zero "0"
               , chomp (AndReg D M) "D&M"
               , chomp (OrReg D A) "D|A"
               , chomp (OrReg D M) "D|M"
+              , chomp (Register A) "A"
+              , chomp (Register D) "D"
+              , chomp (Register M) "M"
               ]
 
 -- Blah blah blah.
