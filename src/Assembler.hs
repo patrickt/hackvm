@@ -35,7 +35,7 @@ type AssemblyM a = RWS [Instruction] [ByteString] Assembler a
 -- (execRWS returns a tuple of the final state (an Assembler) and the accumulated value,
 -- but we're only interested in the accumulated value, so we hit it with snd)
 runAssembly :: [Instruction] -> [ByteString]
-runAssembly instrs = snd $ execRWS assemble instrs emptyAssembler
+runAssembly instrs = snd $ execRWS (buildSymbolTable >> assemble) instrs emptyAssembler
 
 recordWordPadded :: Word16 -> AssemblyM ()
 recordWordPadded w = tell [zeroes <> given] -- tell records the given datum in the accumulated writer-component
@@ -53,6 +53,15 @@ setSymbol s w = do
 
 buildSymbolTable :: AssemblyM ()
 buildSymbolTable = do
+  instrs <- ask
+
+  forM_ instrs $ \i -> do
+    rom <- gets romCounter
+    case i of
+      Label l -> setSymbol l rom
+      _       -> modify (\s -> s { romCounter = rom + 1 })
+
+
   forM_ [0..15] $ \r -> do
     let reg = "R" <> (bshow r)
     setSymbol reg r
@@ -73,6 +82,7 @@ assemble = do
   instr <- asks head
 
   case instr of
+    Label _ -> return ()
     -- computation: dispatch to recordComp
     -- the c@CComp syntax allows us to save the matched variable under a name.
     Comp comp dst jump -> tell ["111" <> acc] where acc = B.concat [toChunk comp, toChunk dst, toChunk jump]
@@ -97,7 +107,7 @@ assemble = do
   done <- asks (null . tail)
   if done
      then return () -- bail out, we're done
-     else local tail buildSymbolTable -- recurse, but drop the first instruction
+     else local tail assemble -- recurse, but drop the first instruction
 
 bshow :: Show a => a -> ByteString
 bshow = B.pack . show
